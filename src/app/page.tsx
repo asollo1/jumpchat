@@ -1,19 +1,21 @@
+import Link from "next/link";
 import Button from "./components/ui/button";
+import Container from "./components/ui/container";
 
 export default function Main(){
 	return (
-		<div className="w-full h-screen flex justify-center align-center dark:text-white">
-			<div className="border dark:border-white border-black p-5 m-auto">
-				<h1 className="text-4xl font-bold">
-					Welcom to JumpCHAT
-				</h1>
-				<h2 className="text-2xl">
-					New level of chat privacy
-				</h2>
+		<Container>
+			<h1 className="text-4xl font-bold">
+				Welcom to JumpCHAT
+			</h1>
+			<h2 className="text-2xl">
+				New level of chat privacy
+			</h2>
+			<Link href={"/chat"}>
 				<Button>
 					Start chatting
 				</Button>
-			</div>
-		</div>
+			</Link>
+		</Container>
 	)
 }
