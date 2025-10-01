@@ -1,0 +1,135 @@
+const express = require('express');
+const app = express();
+var aes256 = require('aes256');
+const fs = require('fs');
+let mysql = require('mysql');
+const crypto = require('crypto');
+
+// Reading config
+const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
+
+// Port validation
+const port = config.port;
+if (!(port > 1 && port < 65535)) {
+  throw new Error("Invalid port in config, please provide a valid port in config.json");
+}
+
+// Database connection
+let con = mysql.createConnection({
+  host: config.dbhost,
+  user: config.dbuser,
+  password: config.dbpassword,
+  database: config.dbdatabase
+});
+
+con.connect(function (err) {
+  if (err) {
+    console.error("Error: Connection to database failed! Check config")
+    throw err;
+  };
+  console.log("Connected to database succesfully!");
+});
+
+app.use(express.json());
+
+// Main page
+app.get('/', (req, res) => {
+  res.send('Jumpchat server is running! (Does not mean it is working correctly)');
+});
+
+// Creating users
+app.post('/api/create_user', (req, res) => {
+  const { username, password } = req.body;
+  // Validation
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password is required in the request body.' });
+  }
+
+  // Checing if username is unique
+  con.query(`SELECT username FROM users WHERE username = '${username}'`, function (err, result) {
+    if (err) throw err;
+    if (result.length > 0) {
+      return res.status(400).json({ error: "Username must be unique" });
+    }
+    // Genertating server keys
+    let serverkey = Buffer.from(crypto.randomBytes(32)).toString("base64").slice(0, 32);
+
+    // Creating user
+    con.query(`INSERT INTO users(username, password, serverkey) VALUES ('${username}', '${password}', '${serverkey}')`, function (err, result) {
+      if (err) throw err;
+      return res.status(200).json({ status_code: `User created succesfully`, id: result.insertId });
+    });
+  });
+});
+
+// Reciving messages
+app.post('/api/send_message', (req, res) => {
+  const { sender, recipiant, message } = req.body;
+  let serverkey = "";
+  // Validation
+  if (!sender || !recipiant || !message) {
+    return res.status(400).json({ error: 'Sender, recipiant and message is required in the request body.' });
+  }
+  // Getting users personal encryption key
+  con.query(`SELECT serverkey FROM users WHERE id = ${recipiant} LIMIT 1`, function (err, result) {
+    if (err) throw err;
+    if (result.length == 0) {
+      return res.status(400).json({ error: "User's encryption key not found" });
+    }
+    serverkey = result[0].serverkey;
+
+    // Date
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    Buffer.from(formattedDateTime, "utf-8").toString('base64')
+    // Encrypting the message
+    let iv = Buffer.from(crypto.randomBytes(32)).toString("base64").slice(2, 18)
+    let encryptor = crypto.createCipheriv("aes-256-cbc", serverkey.slice(0,32), iv);
+    let encrypted = encryptor.update(Buffer.from(message, "utf-8"), 'utf8', 'hex')+encryptor.final('hex');
+    
+    // Adding the message into the database
+    let sql = `INSERT INTO messages VALUES ('${sender}', '${recipiant}', '${encrypted}', '${iv}', '${formattedDateTime}')`;
+    con.query(sql, function (err, result) {
+      if (err) throw err;
+    });
+    res.status(200).json({ status_code: `Message recived succesfully` });
+  });
+});
+
+// Retriving messages
+app.post('/api/get_messages', (req, res) => {
+  const { username, password } = req.body;
+  // Validation
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and password is required in the request body.' });
+  }
+
+  // Login
+  con.query(`SELECT id FROM users WHERE password = '${password}' AND username = '${username}' LIMIT 1`, function (err, result) {
+    if (err) throw err;
+    if (result.length == 0) {
+      return res.status(400).json({ error: "Username does not match password" });
+    }
+    // Retriving messages
+    con.query(`SELECT messages.*, users.serverkey FROM messages LEFT JOIN users ON messages.recipiant = users.id WHERE sender = ${result[0].id} OR recipiant = ${result[0].id};`, function (err, result) {
+      if (err) throw err;
+      let results = result.map(element => {
+        let decipher = crypto.createDecipheriv("aes-256-cbc", element.serverkey.slice(0, 32), element.iv);
+        let decipherd = decipher.update(element.message.toString("utf-8"), "hex", "utf-8")+decipher.final("utf-8");
+        return {"sender": element.sender, "recipiant": element.recipiant, "message": decipherd};
+      });
+      return res.status(200).json({ status_code: `Messages retrived succesfully`, messages: results });
+    });
+  });
+
+});
+// App start
+app.listen(port, () => {
+  console.log(`🚀 Server is running at http://localhost:${port}`);
+});
