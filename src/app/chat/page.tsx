@@ -1,7 +1,29 @@
-import ChatBox from "../components/ui/chatbox";
-import Contacts from "../components/ui/contacts";
-import SettingsBar from "../components/ui/SettingsBar";
-import StatusBar from "../components/ui/statusbar";
+"use client"
+import { useRouter } from "next/navigation";
+import ChatBox from "@/app/components/ui/chatbox";
+import Contacts from "@/app/components/ui/contacts";
+import SettingsBar from "@/app/components/ui/SettingsBar";
+import StatusBar from "@/app/components/ui/statusbar";
+import { getCookie } from "cookies-next";
+
+async function Update() {
+    const { push } = useRouter();
+    var username = getCookie('username');
+    var password = getCookie('password');
+    var server = getCookie('server');
+    var serverPort = getCookie('port');
+    if(username == "" || password == "" || server == "" || serverPort == ""){
+        push('/config');
+    }
+    fetch(`${server}:${serverPort}/get_message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({username: username, password: password}),
+    }).then(response => {
+        return response.json();
+    })
+    setInterval(Update, 100);
+}
 
 export default function Chat() {
     return (

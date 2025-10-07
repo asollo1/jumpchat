@@ -42,14 +42,14 @@ app.post('/api/create_user', (req, res) => {
   const { username, password } = req.body;
   // Validation
   if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password is required in the request body.' });
+    return res.status(400).json({ error: 'Username and password is required in the request body.', 'Access-Control-Allow-Origin': "*" });
   }
 
   // Checing if username is unique
   con.query(`SELECT username FROM users WHERE username = '${username}'`, function (err, result) {
     if (err) throw err;
     if (result.length > 0) {
-      return res.status(400).json({ error: "Username must be unique" });
+      return res.status(400).json({ error: "Username must be unique", 'Access-Control-Allow-Origin': "*"});
     }
     // Genertating server keys
     let serverkey = Buffer.from(crypto.randomBytes(32)).toString("base64").slice(0, 32);
@@ -57,7 +57,7 @@ app.post('/api/create_user', (req, res) => {
     // Creating user
     con.query(`INSERT INTO users(username, password, serverkey) VALUES ('${username}', '${password}', '${serverkey}')`, function (err, result) {
       if (err) throw err;
-      return res.status(200).json({ status_code: `User created succesfully`, id: result.insertId });
+      return res.status(200).json({ status_code: `User created succesfully`, id: result.insertId, 'Access-Control-Allow-Origin': "*" });
     });
   });
 });
@@ -68,13 +68,13 @@ app.post('/api/send_message', (req, res) => {
   let serverkey = "";
   // Validation
   if (!sender || !recipiant || !message) {
-    return res.status(400).json({ error: 'Sender, recipiant and message is required in the request body.' });
+    return res.status(400).json({ error: 'Sender, recipiant and message is required in the request body.', 'Access-Control-Allow-Origin': "*" });
   }
   // Getting users personal encryption key
   con.query(`SELECT serverkey FROM users WHERE id = ${recipiant} LIMIT 1`, function (err, result) {
     if (err) throw err;
     if (result.length == 0) {
-      return res.status(400).json({ error: "User's encryption key not found" });
+      return res.status(400).json({ error: "User's encryption key not found", 'Access-Control-Allow-Origin': "*"});
     }
     serverkey = result[0].serverkey;
 
@@ -98,7 +98,7 @@ app.post('/api/send_message', (req, res) => {
     con.query(sql, function (err, result) {
       if (err) throw err;
     });
-    res.status(200).json({ status_code: `Message recived succesfully` });
+    res.status(200).json({ status_code: `Message recived succesfully`, 'Access-Control-Allow-Origin': "*" });
   });
 });
 
@@ -124,11 +124,18 @@ app.post('/api/get_messages', (req, res) => {
         let decipherd = decipher.update(element.message.toString("utf-8"), "hex", "utf-8")+decipher.final("utf-8");
         return {"sender": element.sender, "recipiant": element.recipiant, "message": decipherd};
       });
-      return res.status(200).json({ status_code: `Messages retrived succesfully`, messages: results });
+      return res.status(200).json({ status_code: `Messages retrived succesfully`, messages: results, 'Access-Control-Allow-Origin': "*" });
     });
   });
 
 });
+
+// Status
+app.post('/api/status', (req, res) => {
+  res.setHeader('Access-Control-Allow-Origin', "*")
+  return res.status(200).json({status_code: `1`, status: `Jumpchat server is running here!`})
+});
+
 // App start
 app.listen(port, () => {
   console.log(`🚀 Server is running at http://localhost:${port}`);
