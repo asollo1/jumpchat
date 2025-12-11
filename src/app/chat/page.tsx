@@ -26,6 +26,9 @@ async function Update() {
 }
 
 export default function Chat() {
+    if(getCookie('username') == undefined || getCookie('password') == undefined || getCookie('server') == undefined || getCookie('port') == undefined){
+        useRouter().push('/config');
+    }
     return (
         <div className="flex h-screen">
             <div className="w-1/5 border dark:border-white border-black p-5 overflow-auto">

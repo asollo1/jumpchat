@@ -4,6 +4,7 @@ import Button from "@/app/components/ui/button"
 import Link from "next/link"
 import React from "react";
 import ServerConfig from "../components/serverConfig";
+import { deleteCookie, setCookie } from "cookies-next";
 
 export default function Settings(){
     const settingMenu = {
@@ -41,6 +42,14 @@ export default function Settings(){
         )
     }
 
+    function logOff(){
+        deleteCookie("username");
+        deleteCookie("password");
+        deleteCookie("server");
+        deleteCookie("port");
+        window.location.href = "/";
+    }
+
     return (
         <div className="flex h-screen">
             <div className="w-1/5 border dark:border-white border-black p-5 overflow-auto">
@@ -48,6 +57,9 @@ export default function Settings(){
                 <SettingsItem menuItem={settingMenu.Server}>Server</SettingsItem>
                 <SettingsItem menuItem={settingMenu.Info}>Info</SettingsItem>
                 <SettingsItem menuItem={settingMenu.About}>About authors</SettingsItem>
+                <div onClick={() => logOff()}>
+                    <SettingsItem menuItem={0}>Log off</SettingsItem>
+                </div>
                 <Link href={"/chat"}><Button>Back</Button></Link>
             </div>
             <div className="w-4/5 border dark:border-white border-black p-5 flex flex-col h-full">
