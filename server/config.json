@@ -1,6 +1,6 @@
 {
     "port": 7654,
-    "dbuser": "jumpchat",
-    "dbpassword": "example",
+    "dbuser": "root",
+    "dbpassword": "1234",
     "dbdatabase": "jumpchat"
 }

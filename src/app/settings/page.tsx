@@ -3,6 +3,7 @@ import { ReactNode } from "react"
 import Button from "@/app/components/ui/button"
 import Link from "next/link"
 import React from "react";
+import ServerConfig from "../components/serverConfig";
 
 export default function Settings(){
     const settingMenu = {
@@ -20,7 +21,7 @@ export default function Settings(){
             settingsMenu = (<div>Looks</div>)
             break;
         case settingMenu.Server:
-            settingsMenu = (<div>Server</div>)
+            settingsMenu = (<ServerConfig />)
             break;
         case settingMenu.Info:
             settingsMenu = (<div>Info</div>)

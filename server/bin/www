@@ -4,6 +4,10 @@ var aes256 = require('aes256');
 const fs = require('fs');
 let mysql = require('mysql');
 const crypto = require('crypto');
+const cors = require('cors');
+
+// Enable CORS for all routes
+app.use(cors());
 
 // Reading config
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8'));
@@ -132,7 +136,6 @@ app.post('/api/get_messages', (req, res) => {
 
 // Status
 app.post('/api/status', (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', "*")
   return res.status(200).json({status_code: `1`, status: `Jumpchat server is running here!`})
 });
 
