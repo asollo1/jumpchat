@@ -1,8 +1,8 @@
 const express = require('express');
 const app = express();
-var aes256 = require('aes256');
+const aes256 = require('aes256');
 const fs = require('fs');
-let mysql = require('mysql');
+const mysql = require('mysql');
 const crypto = require('crypto');
 const cors = require('cors');
 

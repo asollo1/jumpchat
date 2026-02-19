@@ -1,7 +1,6 @@
-"use client"
 import ServerConfig from "@/app/components/serverConfig"
 
-export default function Main(){
+export default async function Main(){
 	return (
 		<ServerConfig />
 	)

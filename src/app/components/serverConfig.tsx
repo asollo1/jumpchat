@@ -1,7 +1,8 @@
+"use client"
 import Button from "@/app/components/ui/button";
 import Field from "@/app/components/ui/field"
 import Container from "@/app/components/ui/container";
-import { setCookie } from "cookies-next";
+import { getCookie, setCookie } from "cookies-next";
 
 // Function that sends request to server and checks if it's alive
 async function TestConnection(){
@@ -71,32 +72,36 @@ async function SaveConfig(){
         return;
     }
     // Save to cookies
-    setCookie("server", server);
-    setCookie("serverPort", serverPort);
-    setCookie("username", username);
-    setCookie("password", password);
+    setCookie("server", server.value);
+    setCookie("serverPort", serverPort.value);
+    setCookie("username", username.value);
+    setCookie("password", password.value);
     // Redirect to messaging page
     window.location.href = "/chat";
 }
 
 // Server configuration page
 export default function ServerConfig(){
+    let server = getCookie('server');
+    let serverPort = getCookie('serverPort');
+    let username = getCookie('username');
+    let password = getCookie('password');
     return (
         <Container>
             <h2 className="text-2xl">
                 Fill in the nececary data:
                 <div className="flex flex-row">
                     <div>
-                        <Field id="server" type="text" label="Server adress" placeholder="http://jumpchat.com"></Field>
-                        <Field id="serverPort" type="number" label="Server port" min={1} max={65535}></Field>
+                        <Field value={server} id="server" type="text" label="Server adress" placeholder="http://jumpchat.com"></Field>
+                        <Field value={serverPort} id="serverPort" type="number" label="Server port" min={1} max={65535}></Field>
                         <div onClick={() => {TestConnection()}}>
                             <Button>Test server</Button>
                         </div>
                         <div id="success"></div>
                     </div>
                     <div>
-                        <Field id="username" type="text" label="Username" placeholder="j0hnyy"></Field>
-                        <Field id="password" type="password" label="Password" placeholder="********"></Field>
+                        <Field value={username} id="username" type="text" label="Username" placeholder="j0hnyy"></Field>
+                        <Field value={password} id="password" type="password" label="Password" placeholder="********"></Field>
                         <div onClick={() => SaveConfig()}>
                             <Button>Save config</Button>
                         </div>
