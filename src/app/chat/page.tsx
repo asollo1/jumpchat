@@ -11,7 +11,7 @@ async function Update() {
     var username = getCookie('username');
     var password = getCookie('password');
     var server = getCookie('server');
-    var serverPort = getCookie('port');
+    var serverPort = getCookie('serverPort');
     if(username == "" || password == "" || server == "" || serverPort == ""){
         push('/config');
     }
