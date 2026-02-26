@@ -1,9 +1,13 @@
+import { getCookie } from "cookies-next";
 import ChatContact from "./chatcontact";
+import { useRouter } from "next/navigation";
 
-export default function Contacts(){
+export default function Contacts(props: {contacts: {name: string, img: string}[], setChosen: (name: string) => void}) {
     return (
         <div className="h-11/12">
-            <ChatContact lastmessage="Lorem ipsum dolor sit." name="John Doe" img="https://toppng.com/uploads/preview/roger-berry-avatar-placeholder-11562991561rbrfzlng6h.png" />
+            {props.contacts.map((contact, index) => (
+                <ChatContact key={index} lastmessage="Lorem ipsum dolor sit." name={contact.name} img={contact.img} onClick={() => props.setChosen(contact.name)} />
+            ))}
         </div>
     )
 }
