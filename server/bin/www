@@ -68,41 +68,54 @@ app.post('/api/create_user', (req, res) => {
 
 // Reciving messages
 app.post('/api/send_message', (req, res) => {
-  const { sender, recipiant, message } = req.body;
+  let {sender, password, recipient, message } = req.body;
   let serverkey = "";
-  // Validation
-  if (!sender || !recipiant || !message) {
-    return res.status(400).json({ error: 'Sender, recipiant and message is required in the request body.', 'Access-Control-Allow-Origin': "*" });
-  }
-  // Getting users personal encryption key
-  con.query(`SELECT serverkey FROM users WHERE id = ${recipiant} LIMIT 1`, function (err, result) {
-    if (err) throw err;
-    if (result.length == 0) {
-      return res.status(400).json({ error: "User's encryption key not found", 'Access-Control-Allow-Origin': "*"});
-    }
-    serverkey = result[0].serverkey;
 
-    // Date
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
-    const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-    Buffer.from(formattedDateTime, "utf-8").toString('base64')
-    // Encrypting the message
-    let iv = Buffer.from(crypto.randomBytes(32)).toString("base64").slice(2, 18)
-    let encryptor = crypto.createCipheriv("aes-256-cbc", serverkey.slice(0,32), iv);
-    let encrypted = encryptor.update(Buffer.from(message, "utf-8"), 'utf8', 'hex')+encryptor.final('hex');
-    
-    // Adding the message into the database
-    let sql = `INSERT INTO messages VALUES ('${sender}', '${recipiant}', '${encrypted}', '${iv}', '${formattedDateTime}')`;
-    con.query(sql, function (err, result) {
+  // Validation
+  if (!sender || !password || !recipient || !message) {
+    return res.status(400).json({ error: 'Sender, password, recipient and message is required in the request body.', 'Access-Control-Allow-Origin': "*" });
+  }
+
+  // Login
+  con.query(`SELECT id FROM users WHERE password = '${password}' AND username = '${sender}' LIMIT 1`, function (err, result) {
+    if (err) throw err;
+    sender = result[0].id;
+    if (result.length == 0) {
+      return res.status(400).json({ error: "Username does not match password" });
+    }
+
+    // Getting users personal encryption key
+    con.query(`SELECT id, serverkey FROM users WHERE username = '${recipient}' LIMIT 1`, function (err, result) {
       if (err) throw err;
+      if (result.length == 0) {
+        return res.status(400).json({ error: "User's encryption key not found", 'Access-Control-Allow-Origin': "*"});
+      }
+      serverkey = result[0].serverkey;
+      recipient = result[0].id;
+
+      // Date
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      const formattedDateTime = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+      Buffer.from(formattedDateTime, "utf-8").toString('base64')
+      
+      // Encrypting the message
+      let iv = Buffer.from(crypto.randomBytes(32)).toString("base64").slice(2, 18)
+      let encryptor = crypto.createCipheriv("aes-256-cbc", serverkey.slice(0,32), iv);
+      let encrypted = encryptor.update(Buffer.from(message, "utf-8"), 'utf8', 'hex')+encryptor.final('hex');
+
+      // Adding the message into the database
+      let sql = `INSERT INTO messages VALUES ('${sender}', '${recipient}', '${encrypted}', '${iv}', '${formattedDateTime}')`;
+      con.query(sql, function (err, result) {
+        if (err) throw err;
+      });
+      res.status(200).json({ status_code: `Message recived succesfully`, 'Access-Control-Allow-Origin': "*" });
     });
-    res.status(200).json({ status_code: `Message recived succesfully`, 'Access-Control-Allow-Origin': "*" });
   });
 });
 

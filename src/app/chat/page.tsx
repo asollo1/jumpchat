@@ -31,6 +31,7 @@ export default function Chat() {
             return response.json();
         }).then(data => {
             if(messages != data){
+                localStorage.setItem('messages', localStorage.getItem("messages") + JSON.stringify(data));
                 setMessages(data);
             }
         })
@@ -51,6 +52,7 @@ export default function Chat() {
             return response.json();
         }).then(data => {
             if(contacts != data){
+                localStorage.setItem('contacts', JSON.stringify(data));
                 setContacts(data);
             }
         })

@@ -53,8 +53,10 @@ async function SaveConfig(){
     let serverPort = (document.getElementById("serverPort") as HTMLInputElement);
     let username = (document.getElementById("username") as HTMLInputElement);
     let password = (document.getElementById("password") as HTMLInputElement);
+    let logoutTime = (document.getElementById("logoutTime") as HTMLInputElement);
     let elements = [server, serverPort, username, password];
     let missingField = false;
+    let maxAge = parseInt(logoutTime.value) * 24 * 60 * 60;
     elements.forEach((el) => {
         el.classList.replace("border-red-500", "border-white");
     });
@@ -72,10 +74,11 @@ async function SaveConfig(){
         return;
     }
     // Save to cookies
-    setCookie("server", server.value);
-    setCookie("serverPort", serverPort.value);
-    setCookie("username", username.value);
-    setCookie("password", password.value);
+    setCookie("server", server.value, {maxAge: maxAge, sameSite: "strict"});
+    setCookie("serverPort", serverPort.value, {maxAge: maxAge, sameSite: "strict"});
+    setCookie("username", username.value, {maxAge: maxAge, sameSite: "strict"});
+    setCookie("password", password.value, {maxAge: maxAge, sameSite: "strict"});
+    setCookie("logoutTime", logoutTime.value, {maxAge: maxAge, sameSite: "strict"});
     // Redirect to messaging page
     window.location.href = "/chat";
 }
@@ -86,6 +89,7 @@ export default function ServerConfig(){
     let serverPort = getCookie('serverPort');
     let username = getCookie('username');
     let password = getCookie('password');
+    let logoutTime = getCookie('logoutTime');
     return (
         <Container>
             <h2 className="text-2xl">
@@ -102,6 +106,7 @@ export default function ServerConfig(){
                     <div>
                         <Field value={username} id="username" type="text" label="Username" placeholder="j0hnyy"></Field>
                         <Field value={password} id="password" type="password" label="Password" placeholder="********"></Field>
+                        <Field value={logoutTime} id="logoutTime" type="number" label="Logout time (days)" min={1}></Field>
                         <div onClick={() => SaveConfig()}>
                             <Button>Save config</Button>
                         </div>
